@@ -181,3 +181,20 @@ result
 ;; WHERE NOT ()-[:BEFORE]->(a)
 ;; AND NOT (b)-[:BEFORE]->()
 ;; RETURN extract(n in nodes(p) | n.id) as labels
+
+;;; Day 5
+
+(let
+    [
+     alphabet (str/split "abcdefghijklmnopqrstuvwxyz" #"")
+     uppercase (map str/upper-case alphabet)
+     lowercase alphabet
+     all (concat (map vector lowercase uppercase)
+                 (map vector uppercase lowercase))
+     patterns (str/join "|" (map str/join all))]
+  (loop [text (slurp "input5")]
+    (if (not (re-find (re-pattern patterns) text))
+      text
+    (recur (str/replace text (re-pattern patterns) ""))))
+)
+      
