@@ -184,6 +184,7 @@ result
 
 ;;; Day 5
 
+
 (let
     [
      alphabet (str/split "abcdefghijklmnopqrstuvwxyz" #"")
@@ -192,9 +193,127 @@ result
      all (concat (map vector lowercase uppercase)
                  (map vector uppercase lowercase))
      patterns (str/join "|" (map str/join all))]
-  (loop [text (slurp "input5")]
-    (if (not (re-find (re-pattern patterns) text))
-      text
-    (recur (str/replace text (re-pattern patterns) ""))))
+  patterns
+  )
+;; => "aA|bB|cC|dD|eE|fF|gG|hH|iI|jJ|kK|lL|mM|nN|oO|pP|qQ|rR|sS|tT|uU|vV|wW|xX|yY|zZ|Aa|Bb|Cc|Dd|Ee|Ff|Gg|Hh|Ii|Jj|Kk|Ll|Mm|Nn|Oo|Pp|Qq|Rr|Ss|Tt|Uu|Vv|Ww|Xx|Yy|Zz"
+
+(let
+    [
+     alphabet (str/split "abcdefghijklmnopqrstuvwxyz" #"")
+     uppercase (map str/upper-case alphabet)
+     lowercase alphabet
+     all (concat (map vector lowercase uppercase)
+                 (map vector uppercase lowercase))
+     patterns (re-pattern (str/join "|" (map str/join all)))
+     input (str/replace (slurp "input5") #"\n" "")]
+  (loop [text input]
+    (if (not (re-find patterns text))
+      (count text)
+    (recur (str/replace text patterns ""))))
 )
+;; => 9562
       
+(str/replace "abBA" #"aA|Aa|bB|Bb" "")
+
+
+(let
+    [
+     alphabet (str/split "abcdefghijklmnopqrstuvwxyz" #"")
+     uppercase (map str/upper-case alphabet)
+     lowercase alphabet
+     all (concat (map vector lowercase uppercase)
+                 (map vector uppercase lowercase))
+     patterns (re-pattern (str/join "|" (map str/join all)))
+     input (str/replace (slurp "input5") #"\n" "")]
+  (->>
+   (map (fn [unit-type] 
+          (loop [text (str/replace input (re-pattern (str "(?i)" unit-type)) "")]
+            (if (not (re-find patterns text))
+              (count text)
+              (recur (str/replace text patterns "")))))
+        alphabet)
+   (apply min))
+)
+;; => 4934
+
+;;; Day 6
+
+(def coords [
+             [1 1]
+             [1 6]
+             [8 3]
+             [3 4]
+             [5 5]
+             [8 9]])
+
+(def coords (->>
+             (str/split (slurp "input6") #"\n")
+             (map #(str/split % #", "))
+             (map (fn [x]
+                    [(Integer/parseInt (first x))
+                     (Integer/parseInt (second x))]))))
+
+
+(first coords)
+
+(defn manhattan [[x1 y1] [x2 y2]]
+  (+ (Math/abs (- x2 x1))
+     (Math/abs (- y2 y1))))
+
+(let [
+      min-x (apply min (map first coords))
+      max-x (apply max (map first coords))
+      min-y (apply min (map second coords))
+      max-y (apply max (map second coords))
+      points (for [x (range (dec min-x) (inc max-x))
+                   y (range (dec min-y) (inc max-y))]
+               [x  y])
+      distances (for [[x y] points]
+                  [[x y]
+                   (zipmap coords
+                           (map #(manhattan [x y] %) coords))])
+      nearest-coords (remove nil?
+                             (map
+                              (fn [[point coord-distances]]
+                                (let [
+                                      nearest (apply min-key val coord-distances)
+                                      nearests (filter #(= (val %) (val nearest)) coord-distances)
+                                      alone? (= (count nearests) 1)]
+                                  (when alone?
+                                    [point (first nearest)])))
+                              distances))
+      infinite-area (set (map second (filter
+                                (fn [[[x-point y-point] [x-coord y-coord]]]
+                                  (or (<= x-point min-x)
+                                      (>= x-point max-x)
+                                      (<= y-point min-y)
+                                      (>= y-point max-y)))
+                                nearest-coords)))
+;;      nearest-with-finite-area (filter
+;;                                (fn [[x-point y-point] [x-coord y-coord]]
+;;                                nearest-coords)
+      points-by-coord (reduce
+                       (fn [acc [[x-point y-point] [x-coord y-coord]]]
+                         (update acc [x-coord y-coord] inc)
+                         )
+                       (zipmap coords (repeat 0))
+                       (filter
+                        (fn [[[x-point y-point] [x-coord y-coord]]]
+                          (some? 
+                        nearest-coords))
+      ]
+  {
+   :limits [min-x max-x min-y max-y]
+   :nearest-coords nearest-coords
+   :points-by-coord points-by-coord
+   :sorted (sort-by val > points-by-coord)
+   :infinite infinite-area})
+
+
+(let [nearest (apply min-key val {:a 12 :b 1 :c 2})
+      nearests (filter #(= (val %) (val nearest)) {:a 12 :b 1 :c 2 :d 1})]
+  nearests)
+
+(update (zipmap coords (repeat 0))
+        [3 4]
+        inc)
