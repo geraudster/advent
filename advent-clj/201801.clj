@@ -157,31 +157,6 @@ result
 
 (some #{{:x 0 :y 1}} [{:x 0 :y 1} {:x 1 :y 2}])
 
-;;; Day 7
-
-(defn export-graph []
-  (let [input (str/split (slurp "input7") #"\n")]
-    (->> input
-         (map #(str/replace % #"Step (\w) must be finished before step (\w) can begin." "$1,$2,BEFORE"))
-    )))
-
-(spit "graph7.csv" (str/join "\n" (export-graph)))
-
-
-;; // Contraint creation
-;; CREATE CONSTRAINT ON (step:Step) ASSERT step.id IS UNIQUE
-
-;; // Import data
-;; LOAD CSV FROM "file:///graph7.csv" as line
-;; MERGE (a:Step { id: line[0]})
-;; MERGE (b:Step { id: line[1]})
-;; CREATE (a) -[:BEFORE]-> (b);
-
-;; MATCH p=((a)-[r:BEFORE*1..100]->(b))
-;; WHERE NOT ()-[:BEFORE]->(a)
-;; AND NOT (b)-[:BEFORE]->()
-;; RETURN extract(n in nodes(p) | n.id) as labels
-
 ;;; Day 5
 
 
@@ -300,7 +275,7 @@ result
                        (filter
                         (fn [[[x-point y-point] [x-coord y-coord]]]
                           (some? 
-                        nearest-coords))
+                        nearest-coords))))
       ]
   {
    :limits [min-x max-x min-y max-y]
@@ -317,3 +292,28 @@ result
 (update (zipmap coords (repeat 0))
         [3 4]
         inc)
+
+;;; Day 7
+
+(defn export-graph []
+  (let [input (str/split (slurp "input7") #"\n")]
+    (->> input
+         (map #(str/replace % #"Step (\w) must be finished before step (\w) can begin." "$1,$2,BEFORE"))
+    )))
+
+(spit "graph7.csv" (str/join "\n" (export-graph)))
+
+
+;; // Contraint creation
+;; CREATE CONSTRAINT ON (step:Step) ASSERT step.id IS UNIQUE
+
+;; // Import data
+;; LOAD CSV FROM "file:///graph7.csv" as line
+;; MERGE (a:Step { id: line[0]})
+;; MERGE (b:Step { id: line[1]})
+;; CREATE (a) -[:BEFORE]-> (b);
+
+;; MATCH p=((a)-[r:BEFORE*1..100]->(b))
+;; WHERE NOT ()-[:BEFORE]->(a)
+;; AND NOT (b)-[:BEFORE]->()
+;; RETURN extract(n in nodes(p) | n.id) as labels
